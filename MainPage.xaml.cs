@@ -33,7 +33,23 @@ public partial class MainPage : ContentPage
 
 		MyStackLayout.Children.Clear();
 
-        // Add a label for each string
+		foreach (string item in folders)
+		{
+			// Get the file/folder name after the last '/'
+			string name = Path.GetFileName(item);
+			MyStackLayout.Children.Add(new Border
+			{
+				Padding = new Thickness(10, 5),
+				Margin = new Thickness(5),
+				BackgroundColor = Colors.Black,
+				Content = new Label
+				{
+					Text = name,
+					FontSize = 16
+				}
+			});
+		}
+		
         foreach (string item in files)
         {
 			// Get the file/folder name after the last '/'
