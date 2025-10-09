@@ -26,13 +26,13 @@
                     Clicked="OnCounterClicked"
                     HorizontalOptions="Fill" />
             </VerticalStackLayout>
-            <VerticalStackLayout
-                x:Name="MyStackLayout">
-                <Label
-                    Text="Files"
-                    Style="{StaticResource Headline}"
-                    SemanticProperties.HeadingLevel="Level1" />
-            </VerticalStackLayout>
+            <FlexLayout
+                x:Name="MyStackLayout"
+                Wrap="Wrap"
+                JustifyContent="Start"
+                AlignItems="Start"
+                Padding="10"
+                Direction="Row" />
         </HorizontalStackLayout>
     </ScrollView>
 

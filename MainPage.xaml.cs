@@ -38,11 +38,16 @@ public partial class MainPage : ContentPage
         {
 			// Get the file/folder name after the last '/'
 			string name = Path.GetFileName(item);
-			MyStackLayout.Children.Add(new Label
+			MyStackLayout.Children.Add(new Border
 			{
-				Text = name,
-				FontSize = 20,
-				TextColor = Colors.White
+				Padding = new Thickness(10, 5),
+				Margin = new Thickness(5),
+				BackgroundColor = Colors.Black,
+				Content = new Label
+				{
+					Text = name,
+					FontSize = 16
+				}
 			});
         }
 
