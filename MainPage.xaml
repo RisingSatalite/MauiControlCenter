@@ -26,7 +26,8 @@
                     Clicked="OnCounterClicked"
                     HorizontalOptions="Fill" />
             </VerticalStackLayout>
-            <VerticalStackLayout>
+            <VerticalStackLayout
+                x:Name="MyStackLayout">
                 <Label
                     Text="Files"
                     Style="{StaticResource Headline}"

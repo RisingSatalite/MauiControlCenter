@@ -29,6 +29,22 @@ public partial class MainPage : ContentPage
 	private void OnCounterClicked(object? sender, EventArgs e)
 	{
 		CounterBtn.Text = location;
+		UpdateFileFolders();
+
+		MyStackLayout.Children.Clear();
+
+        // Add a label for each string
+        foreach (string item in files)
+        {
+			// Get the file/folder name after the last '/'
+			string name = Path.GetFileName(item);
+			MyStackLayout.Children.Add(new Label
+			{
+				Text = name,
+				FontSize = 20,
+				TextColor = Colors.White
+			});
+        }
 
 		SemanticScreenReader.Announce(CounterBtn.Text);
 	}
