@@ -1,8 +1,15 @@
-﻿namespace MauiControlCenter;
+﻿using System;
+using System.IO;
+using System.Text;
+
+namespace MauiControlCenter;
 
 public partial class MainPage : ContentPage
 {
 	int count = 0;
+	string document = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+	string favourites = Environment.GetFolderPath(Environment.SpecialFolder.Favorites);
+	string location = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
 	public MainPage()
 	{
@@ -11,12 +18,7 @@ public partial class MainPage : ContentPage
 
 	private void OnCounterClicked(object? sender, EventArgs e)
 	{
-		count++;
-
-		if (count == 1)
-			CounterBtn.Text = $"Clicked {count} time";
-		else
-			CounterBtn.Text = $"Clicked {count} times";
+		CounterBtn.Text = location;
 
 		SemanticScreenReader.Announce(CounterBtn.Text);
 	}
