@@ -13,6 +13,32 @@ public partial class MainPage : ContentPage
 
 	string[] files;
 	string[] folders;
+	private void OnOpenFileClicked(string filePath)
+	{
+		var path = filePath;
+
+		if (!File.Exists(path))
+		{
+			DisplayAlert("Error", "File not found.", "OK");
+			return;
+		}
+
+		var ext = Path.GetExtension(path).ToLower();
+
+		if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
+		{
+			PreviewImage.Source = ImageSource.FromFile(path);
+		}
+		else
+		{
+			// Open in default app
+			var psi = new System.Diagnostics.ProcessStartInfo(path)
+			{
+				UseShellExecute = true
+			};
+			System.Diagnostics.Process.Start(psi);
+		}
+	}
 
 	public MainPage()
 	{
@@ -50,22 +76,32 @@ public partial class MainPage : ContentPage
 			});
 		}
 		
-        foreach (string item in files)
-        {
-			// Get the file/folder name after the last '/'
-			string name = Path.GetFileName(item);
-			MyStackLayout.Children.Add(new Border
-			{
-				Padding = new Thickness(10, 5),
-				Margin = new Thickness(5),
-				BackgroundColor = Colors.Black,
-				Content = new Label
-				{
-					Text = name,
-					FontSize = 16
-				}
-			});
-        }
+        foreach (string filePath in files)
+            {
+                string name = Path.GetFileName(filePath);
+
+                // Create button
+                var button = new Button
+                {
+                    Text = name,
+                    FontSize = 16,
+                    TextColor = Colors.White,
+                    BackgroundColor = Colors.DarkSlateGray,
+                    Padding = new Thickness(8, 4)
+                };
+
+                // Attach event handler (passing argument via lambda)
+                button.Clicked += (s, e) => OnOpenFileClicked(filePath);
+
+                // Optional: wrap button in a border for styling
+                MyStackLayout.Children.Add(new Border
+                {
+                    Padding = new Thickness(10, 5),
+                    Margin = new Thickness(5),
+                    BackgroundColor = Colors.Black,
+                    Content = button
+                });
+            }
 
 		SemanticScreenReader.Announce(CounterBtn.Text);
 	}

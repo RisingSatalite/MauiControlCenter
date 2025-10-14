@@ -25,6 +25,7 @@
                     SemanticProperties.Hint="Counts the number of times you click"
                     Clicked="OnCounterClicked"
                     HorizontalOptions="Fill" />
+                <Image x:Name="PreviewImage" HeightRequest="300" Aspect="AspectFit" />
             </VerticalStackLayout>
             <FlexLayout
                 x:Name="MyStackLayout"
