@@ -40,6 +40,19 @@ public partial class MainPage : ContentPage
 		}
 	}
 
+	private void OnOpenFolderClicked(string folderPath){
+		var path = folderPath;
+
+		if (!Directory.Exists(path))
+		{
+			DisplayAlert("Error", "Folder not found.", "OK");
+			return;
+		}
+
+		var ext = Path.GetExtension(path).ToLower();
+
+		location = ext;
+	}
 	public MainPage()
 	{
 		InitializeComponent();
@@ -63,17 +76,25 @@ public partial class MainPage : ContentPage
 		{
 			// Get the file/folder name after the last '/'
 			string name = Path.GetFileName(item);
-			MyStackLayout.Children.Add(new Border
+
+			var button = new Button
 			{
-				Padding = new Thickness(10, 5),
-				Margin = new Thickness(5),
-				BackgroundColor = Colors.Black,
-				Content = new Label
-				{
-					Text = name,
-					FontSize = 16
-				}
-			});
+				Text = name,
+				FontSize = 16,
+				TextColor = Colors.White,
+				BackgroundColor = Colors.DarkSlateGray,
+				Padding = new Thickness(8, 4)
+			};
+			// Attach event handler (passing argument via lambda)
+            button.Clicked += (s, e) => OnOpenFolderClicked(item);
+
+			MyStackLayout.Children.Add(new Border
+                {
+                    Padding = new Thickness(10, 5),
+                    Margin = new Thickness(5),
+                    BackgroundColor = Colors.Black,
+                    Content = button
+                });
 		}
 		
         foreach (string filePath in files)
