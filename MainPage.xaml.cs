@@ -54,8 +54,9 @@ public partial class MainPage : ContentPage
 		return;
 	}
 
-	// ✅ Save the actual folder path, not the extension
-	location = folderPath;
+		// ✅ Save the actual folder path, not the extension
+		location = folderPath;
+		OnCounterClicked(null, null);
 	}
 
 	public MainPage()
@@ -70,7 +71,8 @@ public partial class MainPage : ContentPage
 		folders = Directory.GetDirectories(location);
 	}
 
-	private void OnCounterClicked(object? sender, EventArgs e)
+	//The default button, keep for now
+	private void OnCounterClicked(object? sender, EventArgs? e)
 	{
 		CounterBtn.Text = location;
 		UpdateFileFolders();
@@ -91,43 +93,43 @@ public partial class MainPage : ContentPage
 				Padding = new Thickness(8, 4)
 			};
 			// Attach event handler (passing argument via lambda)
-            button.Clicked += (s, e) => OnOpenFolderClicked(item);
+			button.Clicked += (s, e) => OnOpenFolderClicked(item);
 
 			MyStackLayout.Children.Add(new Border
-                {
-                    Padding = new Thickness(10, 5),
-                    Margin = new Thickness(5),
-                    BackgroundColor = Colors.Black,
-                    Content = button
-                });
+			{
+				Padding = new Thickness(10, 5),
+				Margin = new Thickness(5),
+				BackgroundColor = Colors.Black,
+				Content = button
+			});
 		}
-		
-        foreach (string filePath in files)
-            {
-                string name = Path.GetFileName(filePath);
 
-                // Create button
-                var button = new Button
-                {
-                    Text = name,
-                    FontSize = 16,
-                    TextColor = Colors.White,
-                    BackgroundColor = Colors.DarkSlateGray,
-                    Padding = new Thickness(8, 4)
-                };
+		foreach (string filePath in files)
+		{
+			string name = Path.GetFileName(filePath);
 
-                // Attach event handler (passing argument via lambda)
-                button.Clicked += (s, e) => OnOpenFileClicked(filePath);
+			// Create button
+			var button = new Button
+			{
+				Text = name,
+				FontSize = 16,
+				TextColor = Colors.White,
+				BackgroundColor = Colors.DarkSlateGray,
+				Padding = new Thickness(8, 4)
+			};
 
-                // Optional: wrap button in a border for styling
-                MyStackLayout.Children.Add(new Border
-                {
-                    Padding = new Thickness(10, 5),
-                    Margin = new Thickness(5),
-                    BackgroundColor = Colors.Black,
-                    Content = button
-                });
-            }
+			// Attach event handler (passing argument via lambda)
+			button.Clicked += (s, e) => OnOpenFileClicked(filePath);
+
+			// Optional: wrap button in a border for styling
+			MyStackLayout.Children.Add(new Border
+			{
+				Padding = new Thickness(10, 5),
+				Margin = new Thickness(5),
+				BackgroundColor = Colors.Black,
+				Content = button
+			});
+		}
 
 		SemanticScreenReader.Announce(CounterBtn.Text);
 	}
