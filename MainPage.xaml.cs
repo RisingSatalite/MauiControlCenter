@@ -40,19 +40,24 @@ public partial class MainPage : ContentPage
 		}
 	}
 
-	private void OnOpenFolderClicked(string folderPath){
-		var path = folderPath;
-
-		if (!Directory.Exists(path))
-		{
-			DisplayAlert("Error", "Folder not found.", "OK");
-			return;
-		}
-
-		var ext = Path.GetExtension(path).ToLower();
-
-		location = ext;
+	private void OnOpenFolderClicked(string folderPath)
+	{
+    if (string.IsNullOrWhiteSpace(folderPath))
+	{
+		DisplayAlert("Error", "No folder path provided.", "OK");
+		return;
 	}
+
+	if (!Directory.Exists(folderPath))
+	{
+		DisplayAlert("Error", "Folder not found.", "OK");
+		return;
+	}
+
+	// ✅ Save the actual folder path, not the extension
+	location = folderPath;
+	}
+
 	public MainPage()
 	{
 		InitializeComponent();
