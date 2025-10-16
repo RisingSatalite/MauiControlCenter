@@ -23,7 +23,8 @@ public partial class MainPage : ContentPage
 		if (!File.Exists(path))
 		{
 			await DisplayAlert("Error", "File not found.", "OK");
-			return;
+			// Still open file for now
+			// return;
 		}
 
 		var ext = Path.GetExtension(path).ToLower();
