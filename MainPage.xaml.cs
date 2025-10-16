@@ -148,7 +148,7 @@ public partial class MainPage : ContentPage
 			};
 
 			// Attach event handler (passing argument via lambda)
-			button.Clicked += async (s, e) => OnOpenFileClicked(filePath);
+			button.Clicked += async (s, e) => await OnOpenFileClicked(filePath);
 
 			// Optional: wrap button in a border for styling
 			MyStackLayout.Children.Add(new Border
