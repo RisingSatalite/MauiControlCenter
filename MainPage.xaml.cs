@@ -42,26 +42,40 @@ public partial class MainPage : ContentPage
 
 	private void OnOpenFolderClicked(string folderPath)
 	{
-    if (string.IsNullOrWhiteSpace(folderPath))
-	{
-		DisplayAlert("Error", "No folder path provided.", "OK");
-		return;
-	}
+		if (string.IsNullOrWhiteSpace(folderPath))
+		{
+			DisplayAlert("Error", "No folder path provided.", "OK");
+			return;
+		}
 
-	if (!Directory.Exists(folderPath))
-	{
-		DisplayAlert("Error", "Folder not found.", "OK");
-		return;
-	}
+		if (!Directory.Exists(folderPath))
+		{
+			DisplayAlert("Error", "Folder not found.", "OK");
+			return;
+		}
 
 		// ✅ Save the actual folder path, not the extension
 		location = folderPath;
 		OnCounterClicked(null, null);
 	}
 
+	private void OnOpenFolderClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.CommandParameter is string folderPath)
+		{
+			location = folderPath;
+			OnCounterClicked(null, null);
+            // DisplayAlert("Folder Path", folderPath, "OK");
+            // open folder or do whatever with folderPath
+        }
+    }
+
 	public MainPage()
 	{
 		InitializeComponent();
+		
+		Documents.CommandParameter = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
 		files = Directory.GetFiles(location);
 		folders = Directory.GetDirectories(location);
 	}
@@ -97,9 +111,10 @@ public partial class MainPage : ContentPage
 
 			MyStackLayout.Children.Add(new Border
 			{
-				Padding = new Thickness(10, 5),
-				Margin = new Thickness(5),
-				BackgroundColor = Colors.Black,
+				WidthRequest = 100,
+                HeightRequest = 100,
+                Margin = new Thickness(5),
+                BackgroundColor = Colors.LightBlue,
 				Content = button
 			});
 		}

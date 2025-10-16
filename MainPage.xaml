@@ -1,7 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="MauiControlCenter.MainPage">
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    x:Class="MauiControlCenter.MainPage">
 
     <ScrollView>
         <HorizontalStackLayout>
@@ -25,6 +27,11 @@
                     SemanticProperties.Hint="Counts the number of times you click"
                     Clicked="OnCounterClicked"
                     HorizontalOptions="Fill" />
+                <Button
+                    x:Name="Documents"
+                    Text="Documents"
+                    SemanticProperties.Hint="Open Documents"
+                    Clicked="OnOpenFolderClicked" />
                 <Image x:Name="PreviewImage" HeightRequest="300" Aspect="AspectFit" />
             </VerticalStackLayout>
             <FlexLayout
