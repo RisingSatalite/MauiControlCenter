@@ -23,8 +23,7 @@ public partial class MainPage : ContentPage
 		if (!File.Exists(path))
 		{
 			await DisplayAlert("Error", "File not found.", "OK");
-			// Still open file for now
-			// return;
+			return;
 		}
 
 		var ext = Path.GetExtension(path).ToLower();
@@ -32,7 +31,8 @@ public partial class MainPage : ContentPage
 		if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
 		{
 			PreviewImage.Source = ImageSource.FromFile(path);
-			return;
+			// Still open file for now
+			// return;
 		}
 		else
 		{
