@@ -2,24 +2,27 @@
 using System.IO;
 using System.Reflection.Metadata;
 using System.Text;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Storage;
 
 namespace MauiControlCenter;
 
 public partial class MainPage : ContentPage
 {
-	string document = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+	string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 	string favourites = Environment.GetFolderPath(Environment.SpecialFolder.Favorites);
 	string location = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
 	string[] files;
 	string[] folders;
-	private void OnOpenFileClicked(string filePath)
+
+	private async Task OnOpenFileClicked(string filePath)
 	{
 		var path = filePath;
 
 		if (!File.Exists(path))
 		{
-			DisplayAlert("Error", "File not found.", "OK");
+			await DisplayAlert("Error", "File not found.", "OK");
 			return;
 		}
 
@@ -28,15 +31,24 @@ public partial class MainPage : ContentPage
 		if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
 		{
 			PreviewImage.Source = ImageSource.FromFile(path);
+			return;
 		}
 		else
 		{
-			// Open in default app
-			var psi = new System.Diagnostics.ProcessStartInfo(path)
+			try
 			{
-				UseShellExecute = true
-			};
-			System.Diagnostics.Process.Start(psi);
+				// Use MAUI Launcher to open the file with the default app on each platform
+				var request = new OpenFileRequest
+				{
+					File = new ReadOnlyFile(path)
+				};
+				await Launcher.OpenAsync(request);
+			}
+			catch (Exception ex)
+			{
+				// Show an error if opening fails
+				await DisplayAlert("Error", $"Unable to open file: {ex.Message}", "OK");
+			}
 		}
 	}
 
@@ -59,22 +71,23 @@ public partial class MainPage : ContentPage
 		OnCounterClicked(null, null);
 	}
 
+	// Used in the XAML
 	private void OnOpenFolderClicked(object sender, EventArgs e)
-    {
-        if (sender is Button btn && btn.CommandParameter is string folderPath)
+	{
+		if (sender is Button btn && btn.CommandParameter is string folderPath)
 		{
 			location = folderPath;
 			OnCounterClicked(null, null);
-            // DisplayAlert("Folder Path", folderPath, "OK");
-            // open folder or do whatever with folderPath
-        }
-    }
+			// DisplayAlert("Folder Path", folderPath, "OK");
+			// open folder or do whatever with folderPath
+		}
+	}
 
 	public MainPage()
 	{
 		InitializeComponent();
 		
-		Documents.CommandParameter = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+		Documents.CommandParameter = documentsPath;
 
 		files = Directory.GetFiles(location);
 		folders = Directory.GetDirectories(location);
@@ -134,7 +147,7 @@ public partial class MainPage : ContentPage
 			};
 
 			// Attach event handler (passing argument via lambda)
-			button.Clicked += (s, e) => OnOpenFileClicked(filePath);
+			button.Clicked += async (s, e) => OnOpenFileClicked(filePath);
 
 			// Optional: wrap button in a border for styling
 			MyStackLayout.Children.Add(new Border
