@@ -34,8 +34,8 @@ public partial class MainPage : ContentPage
 			// Still open file for now
 			// return;
 		}
-		else
-		{
+		//else
+		//{
 			try
 			{
 				// Use MAUI Launcher to open the file with the default app on each platform
@@ -50,7 +50,7 @@ public partial class MainPage : ContentPage
 				// Show an error if opening fails
 				await DisplayAlert("Error", $"Unable to open file: {ex.Message}", "OK");
 			}
-		}
+		//}
 	}
 
 	private void OnOpenFolderClicked(string folderPath)
