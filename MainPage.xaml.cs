@@ -87,8 +87,9 @@ public partial class MainPage : ContentPage
 	public MainPage()
 	{
 		InitializeComponent();
-		
+
 		Documents.CommandParameter = documentsPath;
+		Favourites.CommandParameter = favourites;
 
 		files = Directory.GetFiles(location);
 		folders = Directory.GetDirectories(location);
