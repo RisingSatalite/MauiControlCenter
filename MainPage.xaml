@@ -28,14 +28,34 @@
                     Clicked="OnCounterClicked"
                     HorizontalOptions="Fill" />
                 <Button
+                    x:Name="Favourites"
+                    Text="Favourites"
+                    SemanticProperties.Hint="Open Favourites"
+                    Clicked="OnOpenFolderClicked" />
+                <Button
+                    x:Name="Desktop"
+                    Text="Desktop"
+                    SemanticProperties.Hint="Open Desktop"
+                    Clicked="OnOpenFolderClicked" />
+                <Button
                     x:Name="Documents"
                     Text="Documents"
                     SemanticProperties.Hint="Open Documents"
                     Clicked="OnOpenFolderClicked" />
                 <Button
-                    x:Name="Favourites"
-                    Text="Favourites"
-                    SemanticProperties.Hint="Open Favourites"
+                    x:Name="Picture"
+                    Text="Pictures"
+                    SemanticProperties.Hint="Open Pictures"
+                    Clicked="OnOpenFolderClicked" />
+                <Button
+                    x:Name="Video"
+                    Text="Video"
+                    SemanticProperties.Hint="Open Videos"
+                    Clicked="OnOpenFolderClicked" />
+                <Button
+                    x:Name="Music"
+                    Text="Music"
+                    SemanticProperties.Hint="Open Music"
                     Clicked="OnOpenFolderClicked" />
                 <Image x:Name="PreviewImage" HeightRequest="300" Aspect="AspectFit" />
             </VerticalStackLayout>

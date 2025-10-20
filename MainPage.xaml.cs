@@ -9,9 +9,16 @@ namespace MauiControlCenter;
 
 public partial class MainPage : ContentPage
 {
+	//The inuse directory
+	string location = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+	//Main folder paths
 	string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 	string favourites = Environment.GetFolderPath(Environment.SpecialFolder.Favorites);
-	string location = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+	string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+	string pictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+	string music = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+	string videos = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+	string startup = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
 
 	string[] files;
 	string[] folders;
@@ -90,6 +97,10 @@ public partial class MainPage : ContentPage
 
 		Documents.CommandParameter = documentsPath;
 		Favourites.CommandParameter = favourites;
+		Desktop.CommandParameter = desktop;
+		Music.CommandParameter = music;
+		Video.CommandParameter = videos;
+		Picture.CommandParameter = pictures;
 
 		files = Directory.GetFiles(location);
 		folders = Directory.GetDirectories(location);
