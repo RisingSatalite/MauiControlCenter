@@ -5,60 +5,44 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     x:Class="MauiControlCenter.MainPage">
 
-    <ScrollView>
-        <HorizontalStackLayout>
-            <VerticalStackLayout
-                Padding="30,0"
-                Spacing="25">
-                <Image
-                    Source="dotnet_bot.png"
-                    HeightRequest="185"
-                    Aspect="AspectFit"
-                    SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+    <Grid ColumnDefinitions="Auto,*">
+        <!-- Left Side (Static) -->
+        <VerticalStackLayout
+            Grid.Column="0"
+            Padding="30,0"
+            Spacing="25"
+            VerticalOptions="Fill">
+            
+            <Image
+                Source="dotnet_bot.png"
+                HeightRequest="185"
+                Aspect="AspectFit"
+                SemanticProperties.Description="dot net bot in a hovercraft number nine" />
 
-                <Label
-                    Text="Hello, World!"
-                    Style="{StaticResource Headline}"
-                    SemanticProperties.HeadingLevel="Level1" />
+            <Label
+                Text="Hello, World!"
+                Style="{StaticResource Headline}"
+                SemanticProperties.HeadingLevel="Level1" />
 
-                <Button
-                    x:Name="CounterBtn"
-                    Text="Click me" 
-                    SemanticProperties.Hint="Open a folder"
-                    Clicked="OnCounterClicked"
-                    HorizontalOptions="Fill" />
-                <Button
-                    x:Name="Favourites"
-                    Text="Favourites"
-                    SemanticProperties.Hint="Open Favourites"
-                    Clicked="OnOpenFolderClicked" />
-                <Button
-                    x:Name="Desktop"
-                    Text="Desktop"
-                    SemanticProperties.Hint="Open Desktop"
-                    Clicked="OnOpenFolderClicked" />
-                <Button
-                    x:Name="Documents"
-                    Text="Documents"
-                    SemanticProperties.Hint="Open Documents"
-                    Clicked="OnOpenFolderClicked" />
-                <Button
-                    x:Name="Picture"
-                    Text="Pictures"
-                    SemanticProperties.Hint="Open Pictures"
-                    Clicked="OnOpenFolderClicked" />
-                <Button
-                    x:Name="Video"
-                    Text="Video"
-                    SemanticProperties.Hint="Open Videos"
-                    Clicked="OnOpenFolderClicked" />
-                <Button
-                    x:Name="Music"
-                    Text="Music"
-                    SemanticProperties.Hint="Open Music"
-                    Clicked="OnOpenFolderClicked" />
-                <Image x:Name="PreviewImage" HeightRequest="300" Aspect="AspectFit" />
-            </VerticalStackLayout>
+            <Button
+                x:Name="CounterBtn"
+                Text="Click me" 
+                SemanticProperties.Hint="Open a folder"
+                Clicked="OnCounterClicked"
+                HorizontalOptions="Fill" />
+
+            <Button x:Name="Favourites" Text="Favourites" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Desktop" Text="Desktop" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Documents" Text="Documents" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Picture" Text="Pictures" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Video" Text="Video" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Music" Text="Music" Clicked="OnOpenFolderClicked" />
+
+            <Image x:Name="PreviewImage" HeightRequest="300" Aspect="AspectFit" />
+        </VerticalStackLayout>
+
+        <!-- Right Side (Scrollable) -->
+        <ScrollView Grid.Column="1">
             <FlexLayout
                 x:Name="MyStackLayout"
                 Wrap="Wrap"
@@ -66,7 +50,6 @@
                 AlignItems="Start"
                 Padding="10"
                 Direction="Row" />
-        </HorizontalStackLayout>
-    </ScrollView>
-
+        </ScrollView>
+    </Grid>
 </ContentPage>
