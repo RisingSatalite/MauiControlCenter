@@ -139,7 +139,7 @@ public partial class MainPage : ContentPage
 			{
 				WidthRequest = 100,
                 HeightRequest = 100,
-                Margin = new Thickness(5),
+                Margin = new Thickness(2),
                 BackgroundColor = Colors.LightBlue,
 				Content = button
 			});
@@ -165,8 +165,8 @@ public partial class MainPage : ContentPage
 			// Optional: wrap button in a border for styling
 			MyStackLayout.Children.Add(new Border
 			{
-				Padding = new Thickness(10, 5),
-				Margin = new Thickness(5),
+				Padding = new Thickness(6, 3),
+				Margin = new Thickness(1),
 				BackgroundColor = Colors.Black,
 				Content = button
 			});
