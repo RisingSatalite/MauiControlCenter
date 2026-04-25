@@ -1,3 +1,2 @@
-bin/Debug/
-obj/Debug/
-obj/project.nuget.cache
+bin/
+obj/
