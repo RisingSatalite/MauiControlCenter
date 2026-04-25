@@ -119,57 +119,108 @@ public partial class MainPage : ContentPage
 
 		MyStackLayout.Children.Clear();
 
+		// Folders: show folder icon above name
 		foreach (string item in folders)
 		{
-			// Get the file/folder name after the last '/'
 			string name = Path.GetFileName(item);
 
-			var button = new Button
+			var iconLabel = new Label
+			{
+				Text = "📁",
+				FontSize = 48,
+				HorizontalOptions = LayoutOptions.Center,
+				VerticalOptions = LayoutOptions.Center
+			};
+
+			var nameLabel = new Label
 			{
 				Text = name,
-				FontSize = 16,
-				TextColor = Colors.White,
-				BackgroundColor = Colors.DarkSlateGray,
-				Padding = new Thickness(8, 4)
+				FontSize = 12,
+				HorizontalTextAlignment = TextAlignment.Center,
+				LineBreakMode = LineBreakMode.TailTruncation
 			};
-			// Attach event handler (passing argument via lambda)
-			button.Clicked += (s, e) => OnOpenFolderClicked(item);
 
-			MyStackLayout.Children.Add(new Border
+			var stack = new VerticalStackLayout
 			{
 				WidthRequest = 100,
-                HeightRequest = 100,
-                Margin = new Thickness(2),
-                BackgroundColor = Colors.LightBlue,
-				Content = button
-			});
+				Padding = new Thickness(6),
+				Children = { iconLabel, nameLabel }
+			};
+
+			var border = new Border
+			{
+				Padding = new Thickness(4),
+				Margin = new Thickness(6),
+				BackgroundColor = Colors.Transparent,
+				Content = stack
+			};
+
+			var tap = new TapGestureRecognizer();
+			// capture item in lambda
+			tap.Tapped += (s, e) => OnOpenFolderClicked(item);
+			border.GestureRecognizers.Add(tap);
+
+			MyStackLayout.Children.Add(border);
 		}
 
+		// Files: show thumbnail for images, generic icon otherwise
 		foreach (string filePath in files)
 		{
 			string name = Path.GetFileName(filePath);
+			string ext = Path.GetExtension(filePath).ToLowerInvariant();
 
-			// Create button
-			var button = new Button
+			View iconView;
+			if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".gif")
+			{
+				iconView = new Image
+				{
+					Source = ImageSource.FromFile(filePath),
+					WidthRequest = 64,
+					HeightRequest = 64,
+					Aspect = Aspect.AspectFill,
+					HorizontalOptions = LayoutOptions.Center
+				};
+			}
+			else
+			{
+				iconView = new Label
+				{
+					Text = "📄",
+					FontSize = 48,
+					HorizontalOptions = LayoutOptions.Center,
+					VerticalOptions = LayoutOptions.Center
+				};
+			}
+
+			var nameLabel = new Label
 			{
 				Text = name,
-				FontSize = 16,
-				TextColor = Colors.White,
-				BackgroundColor = Colors.DarkSlateGray,
-				Padding = new Thickness(8, 4)
+				FontSize = 12,
+				HorizontalTextAlignment = TextAlignment.Center,
+				LineBreakMode = LineBreakMode.TailTruncation
 			};
 
-			// Attach event handler (passing argument via lambda)
-			button.Clicked += async (s, e) => await OnOpenFileClicked(filePath);
-
-			// Optional: wrap button in a border for styling
-			MyStackLayout.Children.Add(new Border
+			var stack = new VerticalStackLayout
 			{
-				Padding = new Thickness(6, 3),
-				Margin = new Thickness(1),
-				BackgroundColor = Colors.Black,
-				Content = button
-			});
+				WidthRequest = 100,
+				Padding = new Thickness(6),
+				Children = { iconView, nameLabel }
+			};
+
+			var border = new Border
+			{
+				Padding = new Thickness(4),
+				Margin = new Thickness(6),
+				BackgroundColor = Colors.Transparent,
+				Content = stack
+			};
+
+			var tap = new TapGestureRecognizer();
+			// open file on tap
+			tap.Tapped += async (s, e) => await OnOpenFileClicked(filePath);
+			border.GestureRecognizers.Add(tap);
+
+			MyStackLayout.Children.Add(border);
 		}
 
 		SemanticScreenReader.Announce(CounterBtn.Text);
