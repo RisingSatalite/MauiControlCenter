@@ -4,6 +4,10 @@ using System.Reflection.Metadata;
 using System.Text;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
+#if WINDOWS
+using Windows.Storage;
+using System.Runtime.InteropServices.WindowsRuntime;
+#endif
 
 namespace MauiControlCenter;
 
@@ -112,7 +116,7 @@ public partial class MainPage : ContentPage
 	}
 
 	//The default button, keep for now
-	private void OnCounterClicked(object? sender, EventArgs? e)
+	private async void OnCounterClicked(object? sender, EventArgs? e)
 	{
 		CounterBtn.Text = location;
 		UpdateFileFolders();
@@ -163,34 +167,20 @@ public partial class MainPage : ContentPage
 			MyStackLayout.Children.Add(border);
 		}
 
-		// Files: show thumbnail for images, generic icon otherwise
+		// Files: show thumbnail for images, Windows native thumbnails when available, generic icon otherwise
 		foreach (string filePath in files)
 		{
 			string name = Path.GetFileName(filePath);
 			string ext = Path.GetExtension(filePath).ToLowerInvariant();
 
-			View iconView;
-			if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".gif")
+			// Create a lightweight placeholder immediately (keeps UI fast)
+			View placeholder = new Label
 			{
-				iconView = new Image
-				{
-					Source = ImageSource.FromFile(filePath),
-					WidthRequest = 64,
-					HeightRequest = 64,
-					Aspect = Aspect.AspectFill,
-					HorizontalOptions = LayoutOptions.Center
-				};
-			}
-			else
-			{
-				iconView = new Label
-				{
-					Text = "📄",
-					FontSize = 48,
-					HorizontalOptions = LayoutOptions.Center,
-					VerticalOptions = LayoutOptions.Center
-				};
-			}
+				Text = ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".gif" ? "🖼️" : "📄",
+				FontSize = 36,
+				HorizontalOptions = LayoutOptions.Center,
+				VerticalOptions = LayoutOptions.Center
+			};
 
 			var nameLabel = new Label
 			{
@@ -204,7 +194,7 @@ public partial class MainPage : ContentPage
 			{
 				WidthRequest = 100,
 				Padding = new Thickness(6),
-				Children = { iconView, nameLabel }
+				Children = { placeholder, nameLabel }
 			};
 
 			var border = new Border
@@ -221,8 +211,73 @@ public partial class MainPage : ContentPage
 			border.GestureRecognizers.Add(tap);
 
 			MyStackLayout.Children.Add(border);
+
+			// Start loading thumbnail in background and replace placeholder when ready
+			_ = LoadAndApplyThumbnailAsync(filePath, stack);
 		}
 
 		SemanticScreenReader.Announce(CounterBtn.Text);
+	}
+
+	private async Task<ImageSource?> GetThumbnailAsync(string path)
+	{
+#if WINDOWS
+		try
+		{
+			var storageFile = await StorageFile.GetFileFromPathAsync(path);
+			const uint requestedSize = 64;
+			var thumb = await storageFile.GetThumbnailAsync(Windows.Storage.FileProperties.ThumbnailMode.SingleItem, requestedSize);
+			if (thumb != null && thumb.Size > 0)
+			{
+				using (var rs = thumb.AsStreamForRead())
+				using (var ms = new MemoryStream())
+				{
+					await rs.CopyToAsync(ms);
+					var buffer = ms.ToArray();
+					return ImageSource.FromStream(() => new MemoryStream(buffer));
+				}
+			}
+		}
+		catch
+		{
+			// ignore and fallback
+		}
+#endif
+		return null;
+	}
+
+	private async Task LoadAndApplyThumbnailAsync(string filePath, VerticalStackLayout stack)
+	{
+		try
+		{
+			var thumb = await GetThumbnailAsync(filePath).ConfigureAwait(false);
+			if (thumb != null)
+			{
+				Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
+				{
+					var img = new Image
+					{
+						Source = thumb,
+						WidthRequest = 64,
+						HeightRequest = 64,
+						Aspect = Aspect.AspectFill,
+						HorizontalOptions = LayoutOptions.Center
+					};
+					// Replace first child (placeholder) with the loaded image
+					if (stack.Children.Count > 0)
+					{
+						stack.Children[0] = img;
+					}
+				});
+			}
+			else
+			{
+				// no thumbnail: do nothing, placeholder remains
+			}
+		}
+		catch
+		{
+			// ignore errors and keep placeholder
+		}
 	}
 }
