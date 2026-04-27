@@ -34,6 +34,7 @@
             <Button x:Name="Favourites" Text="Favourites" Clicked="OnOpenFolderClicked" />
             <Button x:Name="Desktop" Text="Desktop" Clicked="OnOpenFolderClicked" />
             <Button x:Name="Documents" Text="Documents" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Downloads" Text="Downloads" Clicked="OnOpenFolderClicked" />
             <Button x:Name="Picture" Text="Pictures" Clicked="OnOpenFolderClicked" />
             <Button x:Name="Video" Text="Video" Clicked="OnOpenFolderClicked" />
             <Button x:Name="Music" Text="Music" Clicked="OnOpenFolderClicked" />

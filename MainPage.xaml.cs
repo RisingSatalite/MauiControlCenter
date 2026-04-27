@@ -19,6 +19,7 @@ public partial class MainPage : ContentPage
 	string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 	string favourites = Environment.GetFolderPath(Environment.SpecialFolder.Favorites);
 	string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+	string downloads = GetDownloadsPath();
 	string pictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 	string music = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
 	string videos = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
@@ -26,6 +27,16 @@ public partial class MainPage : ContentPage
 
 	string[] files;
 	string[] folders;
+
+	//Incase of edge cases
+	private static string GetDownloadsPath()
+	{
+#if WINDOWS
+		return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+#else
+		return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Downloads");
+#endif
+	}
 
 	private async Task OnOpenFileClicked(string filePath)
 	{
@@ -102,6 +113,7 @@ public partial class MainPage : ContentPage
 		Documents.CommandParameter = documentsPath;
 		Favourites.CommandParameter = favourites;
 		Desktop.CommandParameter = desktop;
+		Downloads.CommandParameter = downloads;
 		Music.CommandParameter = music;
 		Video.CommandParameter = videos;
 		Picture.CommandParameter = pictures;
