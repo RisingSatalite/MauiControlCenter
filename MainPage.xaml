@@ -15,7 +15,7 @@
             
             <Image
                 Source="dotnet_bot.png"
-                HeightRequest="185"
+                HeightRequest="85"
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a hovercraft number nine" />
 
