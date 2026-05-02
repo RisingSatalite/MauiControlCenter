@@ -5,9 +5,18 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     x:Class="MauiControlCenter.MainPage">
 
-    <Grid ColumnDefinitions="Auto,*">
-        <!-- Left Side (Static) -->
+    <Grid x:Name="MainGrid">
+        <Grid.ColumnDefinitions>
+            <!-- initial left pane width, adjustable via splitter -->
+            <ColumnDefinition Width="300" />
+            <!-- splitter -->
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Side (Resizable) -->
         <VerticalStackLayout
+            x:Name="LeftPane"
             Grid.Column="0"
             Padding="30,0"
             Spacing="25"
@@ -15,14 +24,8 @@
             
             <Image
                 Source="dotnet_bot.png"
-                HeightRequest="85"
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a hovercraft number nine" />
-
-            <Label
-                Text="Hello, World!"
-                Style="{StaticResource Headline}"
-                SemanticProperties.HeadingLevel="Level1" />
 
             <Button
                 x:Name="CounterBtn"
@@ -42,8 +45,20 @@
             <Image x:Name="PreviewImage" HeightRequest="300" Aspect="AspectFit" />
         </VerticalStackLayout>
 
+        <!-- Draggable splitter -->
+        <BoxView
+            x:Name="Splitter"
+            Grid.Column="1"
+            WidthRequest="8"
+            BackgroundColor="Gray"
+            HorizontalOptions="Center">
+            <BoxView.GestureRecognizers>
+                <PanGestureRecognizer PanUpdated="OnSplitterPanUpdated" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
         <!-- Right Side (Scrollable) -->
-        <ScrollView Grid.Column="1">
+        <ScrollView Grid.Column="2">
             <FlexLayout
                 x:Name="MyStackLayout"
                 Wrap="Wrap"

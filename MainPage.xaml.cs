@@ -28,6 +28,11 @@ public partial class MainPage : ContentPage
 	string[] files;
 	string[] folders;
 
+	// Fields for splitter resizing
+	double _initialLeftWidth;
+	const double SplitterWidth = 8;
+	const double MinPaneWidth = 120;
+
 	//Incase of edge cases
 	private static string GetDownloadsPath()
 	{
@@ -120,6 +125,37 @@ public partial class MainPage : ContentPage
 
 		files = Directory.GetFiles(location);
 		folders = Directory.GetDirectories(location);
+	}
+
+	void OnSplitterPanUpdated(object sender, PanUpdatedEventArgs e)
+	{
+		switch (e.StatusType)
+		{
+			case GestureStatus.Started:
+				_initialLeftWidth = LeftPane.Width;
+				break;
+
+			case GestureStatus.Running:
+				var newLeft = _initialLeftWidth + e.TotalX;
+				var maxLeft = Math.Max(MinPaneWidth, MainGrid.Width - SplitterWidth - MinPaneWidth);
+				if (newLeft < MinPaneWidth) newLeft = MinPaneWidth;
+				if (newLeft > maxLeft) newLeft = maxLeft;
+
+				MainGrid.ColumnDefinitions[0].Width = new GridLength(newLeft, GridUnitType.Absolute);
+				MainGrid.ColumnDefinitions[2].Width = new GridLength(Math.Max(0, MainGrid.Width - newLeft - SplitterWidth), GridUnitType.Absolute);
+				break;
+
+			case GestureStatus.Completed:
+			case GestureStatus.Canceled:
+				var available = Math.Max(1, MainGrid.Width - SplitterWidth);
+				var leftPixels = MainGrid.ColumnDefinitions[0].Width.IsAbsolute ? MainGrid.ColumnDefinitions[0].Width.Value : LeftPane.Width;
+				var rightPixels = MainGrid.ColumnDefinitions[2].Width.IsAbsolute ? MainGrid.ColumnDefinitions[2].Width.Value : (MainGrid.Width - leftPixels - SplitterWidth);
+				var leftWeight = Math.Max(0.01, leftPixels / available);
+				var rightWeight = Math.Max(0.01, rightPixels / available);
+				MainGrid.ColumnDefinitions[0].Width = new GridLength(leftWeight, GridUnitType.Star);
+				MainGrid.ColumnDefinitions[2].Width = new GridLength(rightWeight, GridUnitType.Star);
+				break;
+		}
 	}
 	public void UpdateFileFolders()
 	{
