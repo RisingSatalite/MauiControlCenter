@@ -4,6 +4,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
+
 #if WINDOWS
 using Windows.Storage;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -25,6 +26,9 @@ public partial class MainPage : ContentPage
 	string videos = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
 	string startup = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
 
+	// Cancellation for incremental loading
+	CancellationTokenSource? _loadCts;
+	const int DefaultBatchSize = 64;
 	string[] files;
 	string[] folders;
 
@@ -123,8 +127,9 @@ public partial class MainPage : ContentPage
 		Video.CommandParameter = videos;
 		Picture.CommandParameter = pictures;
 
-		files = Directory.GetFiles(location);
-		folders = Directory.GetDirectories(location);
+		BindingContext = this;
+
+		// Do not enumerate folders synchronously on startup; load when requested.
 	}
 
 	void OnSplitterPanUpdated(object sender, PanUpdatedEventArgs e)
@@ -167,104 +172,117 @@ public partial class MainPage : ContentPage
 	private async void OnCounterClicked(object? sender, EventArgs? e)
 	{
 		CounterBtn.Text = location;
-		UpdateFileFolders();
-
-		MyStackLayout.Children.Clear();
-
-		// Folders: show folder icon above name
-		foreach (string item in folders)
+		// Cancel any previous load and start a new incremental load
+		_loadCts?.Cancel();
+		_loadCts = new CancellationTokenSource();
+		try
 		{
-			string name = Path.GetFileName(item);
+			await LoadFolderIncrementalAsync(location, _loadCts.Token).ConfigureAwait(false);
+		}
+		catch (OperationCanceledException)
+		{
+			// ignore
+		}
+		catch (Exception ex)
+		{
+			// show minimal error feedback on UI thread
+			MainThread.BeginInvokeOnMainThread(async () => await DisplayAlert("Error", ex.Message, "OK"));
+		}
+	}
 
-			var iconLabel = new Label
-			{
-				Text = "📁",
-				FontSize = 48,
-				HorizontalOptions = LayoutOptions.Center,
-				VerticalOptions = LayoutOptions.Center
-			};
+	// Incrementally enumerate and add folder/file UI in batches to keep UI responsive
+	private async Task LoadFolderIncrementalAsync(string path, CancellationToken ct, int batchSize = DefaultBatchSize)
+	{
+		// Clear existing items on UI thread quickly
+		MainThread.BeginInvokeOnMainThread(() => MyStackLayout.Children.Clear());
 
-			var nameLabel = new Label
-			{
-				Text = name,
-				FontSize = 12,
-				HorizontalTextAlignment = TextAlignment.Center,
-				LineBreakMode = LineBreakMode.TailTruncation
-			};
-
-			var stack = new VerticalStackLayout
-			{
-				WidthRequest = 100,
-				Padding = new Thickness(6),
-				Children = { iconLabel, nameLabel }
-			};
-
-			var border = new Border
-			{
-				Padding = new Thickness(4),
-				Margin = new Thickness(6),
-				BackgroundColor = Colors.Transparent,
-				Content = stack
-			};
-
+		// Helper to create folder UI
+		UIElement CreateFolderElement(string folderPath)
+		{
+			string name = Path.GetFileName(folderPath);
+			var iconLabel = new Label { Text = "📁", FontSize = 48, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
+			var nameLabel = new Label { Text = name, FontSize = 12, HorizontalTextAlignment = TextAlignment.Center, LineBreakMode = LineBreakMode.TailTruncation };
+			var stack = new VerticalStackLayout { WidthRequest = 100, Padding = new Thickness(6), Children = { iconLabel, nameLabel } };
+			var border = new Border { Padding = new Thickness(4), Margin = new Thickness(6), BackgroundColor = Colors.Transparent, Content = stack };
 			var tap = new TapGestureRecognizer();
-			// capture item in lambda
-			tap.Tapped += (s, e) => OnOpenFolderClicked(item);
+			tap.Tapped += (s, e) => OnOpenFolderClicked(folderPath);
 			border.GestureRecognizers.Add(tap);
-
-			MyStackLayout.Children.Add(border);
+			return border;
 		}
 
-		// Files: show thumbnail for images, Windows native thumbnails when available, generic icon otherwise
-		foreach (string filePath in files)
+		// Helper to create file UI and kick off thumbnail loading
+		UIElement CreateFileElement(string filePath)
 		{
 			string name = Path.GetFileName(filePath);
 			string ext = Path.GetExtension(filePath).ToLowerInvariant();
-
-			// Create a lightweight placeholder immediately (keeps UI fast)
-			View placeholder = new Label
-			{
-				Text = ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".gif" ? "🖼️" : "📄",
-				FontSize = 36,
-				HorizontalOptions = LayoutOptions.Center,
-				VerticalOptions = LayoutOptions.Center
-			};
-
-			var nameLabel = new Label
-			{
-				Text = name,
-				FontSize = 12,
-				HorizontalTextAlignment = TextAlignment.Center,
-				LineBreakMode = LineBreakMode.TailTruncation
-			};
-
-			var stack = new VerticalStackLayout
-			{
-				WidthRequest = 100,
-				Padding = new Thickness(6),
-				Children = { placeholder, nameLabel }
-			};
-
-			var border = new Border
-			{
-				Padding = new Thickness(4),
-				Margin = new Thickness(6),
-				BackgroundColor = Colors.Transparent,
-				Content = stack
-			};
-
+			View placeholder = new Label { Text = ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".gif" ? "🖼️" : "📄", FontSize = 36, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
+			var nameLabel = new Label { Text = name, FontSize = 12, HorizontalTextAlignment = TextAlignment.Center, LineBreakMode = LineBreakMode.TailTruncation };
+			var stack = new VerticalStackLayout { WidthRequest = 100, Padding = new Thickness(6), Children = { placeholder, nameLabel } };
+			var border = new Border { Padding = new Thickness(4), Margin = new Thickness(6), BackgroundColor = Colors.Transparent, Content = stack };
 			var tap = new TapGestureRecognizer();
-			// open file on tap
 			tap.Tapped += async (s, e) => await OnOpenFileClicked(filePath);
 			border.GestureRecognizers.Add(tap);
-
-			MyStackLayout.Children.Add(border);
-
-			// Start loading thumbnail in background and replace placeholder when ready
 			_ = LoadAndApplyThumbnailAsync(filePath, stack);
+			return border;
 		}
 
-		SemanticScreenReader.Announce(CounterBtn.Text);
+		// Enumerate directories first, then files. Use Enumerate* to avoid materializing large arrays.
+		var dirEnum = Directory.EnumerateDirectories(path).GetEnumerator();
+		var fileEnum = Directory.EnumerateFiles(path).GetEnumerator();
+
+		List<UIElement> batch = new List<UIElement>(batchSize);
+		try
+		{
+			// Directories
+			while (true)
+			{
+				ct.ThrowIfCancellationRequested();
+				batch.Clear();
+				for (int i = 0; i < batchSize && dirEnum.MoveNext(); i++)
+				{
+					batch.Add(CreateFolderElement(dirEnum.Current));
+				}
+
+				if (batch.Count == 0) break;
+
+				MainThread.BeginInvokeOnMainThread(() =>
+				{
+					foreach (var v in batch) MyStackLayout.Children.Add(v);
+				});
+
+				// yield to UI
+				await Task.Yield();
+			}
+
+			// Files
+			while (true)
+			{
+				ct.ThrowIfCancellationRequested();
+				batch.Clear();
+				for (int i = 0; i < batchSize && fileEnum.MoveNext(); i++)
+				{
+					batch.Add(CreateFileElement(fileEnum.Current));
+				}
+
+				if (batch.Count == 0) break;
+
+				MainThread.BeginInvokeOnMainThread(() =>
+				{
+					foreach (var v in batch) MyStackLayout.Children.Add(v);
+				});
+
+				// yield to UI
+				await Task.Yield();
+			}
+		}
+		finally
+		{
+			dirEnum.Dispose();
+			fileEnum.Dispose();
+		}
+
+		// Announce on UI thread when done
+		MainThread.BeginInvokeOnMainThread(() => SemanticScreenReader.Announce(path));
 	}
 
 	private async Task<ImageSource?> GetThumbnailAsync(string path)
