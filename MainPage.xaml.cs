@@ -4,6 +4,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
+using Microsoft.Maui.Controls;
 
 #if WINDOWS
 using Windows.Storage;
@@ -197,7 +198,7 @@ public partial class MainPage : ContentPage
 		MainThread.BeginInvokeOnMainThread(() => MyStackLayout.Children.Clear());
 
 		// Helper to create folder UI
-		UIElement CreateFolderElement(string folderPath)
+		View CreateFolderElement(string folderPath)
 		{
 			string name = Path.GetFileName(folderPath);
 			var iconLabel = new Label { Text = "📁", FontSize = 48, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
@@ -211,7 +212,7 @@ public partial class MainPage : ContentPage
 		}
 
 		// Helper to create file UI and kick off thumbnail loading
-		UIElement CreateFileElement(string filePath)
+		View CreateFileElement(string filePath)
 		{
 			string name = Path.GetFileName(filePath);
 			string ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -230,7 +231,7 @@ public partial class MainPage : ContentPage
 		var dirEnum = Directory.EnumerateDirectories(path).GetEnumerator();
 		var fileEnum = Directory.EnumerateFiles(path).GetEnumerator();
 
-		List<UIElement> batch = new List<UIElement>(batchSize);
+		List<View> batch = new List<View>(batchSize);
 		try
 		{
 			// Directories
