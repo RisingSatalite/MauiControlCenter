@@ -27,11 +27,10 @@
                 Aspect="AspectFit"
                 SemanticProperties.Description="dot net bot in a hovercraft number nine" />
 
-            <Button
+            <Label
                 x:Name="CounterBtn"
-                Text="Click me" 
+                Text="Where" 
                 SemanticProperties.Hint="Open a folder"
-                Clicked="OnCounterClicked"
                 HorizontalOptions="Fill" />
 
             <Button x:Name="Favourites" Text="Favourites" Clicked="OnOpenFolderClicked" />
