@@ -6,6 +6,8 @@
     xmlns:local="clr-namespace:MauiControlCenter"
     x:Class="MauiControlCenter.MainPage">
 
+    <!-- No resources required; icon visibility handled via DataTriggers -->
+
     <Grid x:Name="MainGrid">
         <Grid.ColumnDefinitions>
             <!-- initial left pane width, adjustable via splitter -->
@@ -69,12 +71,24 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="local:FileItem">
                     <Border Padding="4" Margin="6" BackgroundColor="Transparent">
                         <VerticalStackLayout WidthRequest="100" Padding="6">
                             <Grid>
-                                <Image Source="{Binding Thumbnail}" WidthRequest="64" HeightRequest="64" Aspect="AspectFill" HorizontalOptions="Center" />
-                                <Label Text="{Binding Icon}" FontSize="36" HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Image Source="{Binding Thumbnail}" WidthRequest="64" HeightRequest="64" Aspect="AspectFill" HorizontalOptions="Center" IsVisible="True">
+                                    <Image.Triggers>
+                                        <DataTrigger TargetType="Image" Binding="{Binding Thumbnail}" Value="{x:Null}">
+                                            <Setter Property="IsVisible" Value="False" />
+                                        </DataTrigger>
+                                    </Image.Triggers>
+                                </Image>
+                                <Label Text="{Binding Icon}" FontSize="36" HorizontalOptions="Center" VerticalOptions="Center" IsVisible="False">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding Thumbnail}" Value="{x:Null}">
+                                            <Setter Property="IsVisible" Value="True" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
                             </Grid>
                             <Label Text="{Binding Name}" FontSize="12" HorizontalTextAlignment="Center" LineBreakMode="TailTruncation" />
                         </VerticalStackLayout>
@@ -85,5 +99,7 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+        <!-- Lightweight drag indicator shown during splitter pan; input transparent so it doesn't block touches -->
+        <BoxView x:Name="DragIndicator" Grid.ColumnSpan="3" WidthRequest="2" BackgroundColor="Gray" IsVisible="False" HorizontalOptions="Start" VerticalOptions="Fill" InputTransparent="True" Opacity="0.9" />
     </Grid>
 </ContentPage>

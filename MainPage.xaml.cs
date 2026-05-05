@@ -34,8 +34,8 @@ public partial class MainPage : ContentPage
 	// Cancellation for incremental loading
 	CancellationTokenSource? _loadCts;
 	const int DefaultBatchSize = 64;
-	string[]? files;
-	string[]? folders;
+	string[] files = Array.Empty<string>();
+	string[] folders = Array.Empty<string>();
 
 	// Fields for splitter resizing
 	double _initialLeftWidth;
@@ -177,10 +177,20 @@ public partial class MainPage : ContentPage
 
 	void OnSplitterPanUpdated(object sender, PanUpdatedEventArgs e)
 	{
+		var drag = this.FindByName<BoxView>("DragIndicator");
 		switch (e.StatusType)
 		{
 			case GestureStatus.Started:
 				_initialLeftWidth = LeftPane.Width;
+				if (drag != null)
+				{
+					MainThread.BeginInvokeOnMainThread(() =>
+					{
+						drag.IsVisible = true;
+						// position overlay at current left width
+						drag.TranslationX = _initialLeftWidth;
+					});
+				}
 				break;
 
 			case GestureStatus.Running:
@@ -189,19 +199,27 @@ public partial class MainPage : ContentPage
 				if (newLeft < MinPaneWidth) newLeft = MinPaneWidth;
 				if (newLeft > maxLeft) newLeft = maxLeft;
 
-				MainGrid.ColumnDefinitions[0].Width = new GridLength(newLeft, GridUnitType.Absolute);
-				MainGrid.ColumnDefinitions[2].Width = new GridLength(Math.Max(0, MainGrid.Width - newLeft - SplitterWidth), GridUnitType.Absolute);
+				// Move lightweight overlay for smooth feedback; commit actual layout on release
+				if (drag != null)
+				{
+					MainThread.BeginInvokeOnMainThread(() => drag.TranslationX = newLeft);
+				}
 				break;
 
 			case GestureStatus.Completed:
 			case GestureStatus.Canceled:
 				var available = Math.Max(1, MainGrid.Width - SplitterWidth);
-				var leftPixels = MainGrid.ColumnDefinitions[0].Width.IsAbsolute ? MainGrid.ColumnDefinitions[0].Width.Value : LeftPane.Width;
-				var rightPixels = MainGrid.ColumnDefinitions[2].Width.IsAbsolute ? MainGrid.ColumnDefinitions[2].Width.Value : (MainGrid.Width - leftPixels - SplitterWidth);
-				var leftWeight = Math.Max(0.01, leftPixels / available);
-				var rightWeight = Math.Max(0.01, rightPixels / available);
+				// compute final left pixels clamped
+				var finalLeft = Math.Max(MinPaneWidth, Math.Min(_initialLeftWidth + e.TotalX, MainGrid.Width - MinPaneWidth - SplitterWidth));
+				var leftWeight = Math.Max(0.01, finalLeft / available);
+				var rightWeight = Math.Max(0.01, (MainGrid.Width - finalLeft - SplitterWidth) / available);
 				MainGrid.ColumnDefinitions[0].Width = new GridLength(leftWeight, GridUnitType.Star);
 				MainGrid.ColumnDefinitions[2].Width = new GridLength(rightWeight, GridUnitType.Star);
+
+				if (drag != null)
+				{
+					MainThread.BeginInvokeOnMainThread(() => drag.IsVisible = false);
+				}
 				break;
 		}
 	}
