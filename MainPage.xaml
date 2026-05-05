@@ -11,7 +11,7 @@
     <Grid x:Name="MainGrid">
         <Grid.ColumnDefinitions>
             <!-- initial left pane width, adjustable via splitter -->
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="200" />
             <!-- splitter -->
             <ColumnDefinition Width="8" />
             <ColumnDefinition Width="*" />
@@ -21,8 +21,8 @@
         <VerticalStackLayout
             x:Name="LeftPane"
             Grid.Column="0"
-            Padding="30,0"
-            Spacing="25"
+            Padding="10,0"
+            Spacing="15"
             VerticalOptions="Fill">
             
             <Image
@@ -58,6 +58,7 @@
                 <PanGestureRecognizer PanUpdated="OnSplitterPanUpdated" />
             </BoxView.GestureRecognizers>
         </BoxView>
+        <BoxView x:Name="DragIndicator" Grid.ColumnSpan="3" WidthRequest="2" BackgroundColor="Gray" IsVisible="False" HorizontalOptions="Start" VerticalOptions="Fill" InputTransparent="True" Opacity="0.9" />
 
         <!-- Right Side (CollectionView) -->
         <CollectionView
@@ -100,6 +101,5 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
         <!-- Lightweight drag indicator shown during splitter pan; input transparent so it doesn't block touches -->
-        <BoxView x:Name="DragIndicator" Grid.ColumnSpan="3" WidthRequest="2" BackgroundColor="Gray" IsVisible="False" HorizontalOptions="Start" VerticalOptions="Fill" InputTransparent="True" Opacity="0.9" />
     </Grid>
 </ContentPage>
