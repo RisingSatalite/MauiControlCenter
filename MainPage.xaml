@@ -5,35 +5,59 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     x:Class="MauiControlCenter.MainPage">
 
-    <ScrollView>
-        <HorizontalStackLayout>
-            <VerticalStackLayout
-                Padding="30,0"
-                Spacing="25">
-                <Image
-                    Source="dotnet_bot.png"
-                    HeightRequest="185"
-                    Aspect="AspectFit"
-                    SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+    <Grid x:Name="MainGrid">
+        <Grid.ColumnDefinitions>
+            <!-- initial left pane width, adjustable via splitter -->
+            <ColumnDefinition Width="300" />
+            <!-- splitter -->
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-                <Label
-                    Text="Hello, World!"
-                    Style="{StaticResource Headline}"
-                    SemanticProperties.HeadingLevel="Level1" />
+        <!-- Left Side (Resizable) -->
+        <VerticalStackLayout
+            x:Name="LeftPane"
+            Grid.Column="0"
+            Padding="30,0"
+            Spacing="25"
+            VerticalOptions="Fill">
+            
+            <Image
+                Source="dotnet_bot.png"
+                Aspect="AspectFit"
+                SemanticProperties.Description="dot net bot in a hovercraft number nine" />
 
-                <Button
-                    x:Name="CounterBtn"
-                    Text="Click me" 
-                    SemanticProperties.Hint="Counts the number of times you click"
-                    Clicked="OnCounterClicked"
-                    HorizontalOptions="Fill" />
-                <Button
-                    x:Name="Documents"
-                    Text="Documents"
-                    SemanticProperties.Hint="Open Documents"
-                    Clicked="OnOpenFolderClicked" />
-                <Image x:Name="PreviewImage" HeightRequest="300" Aspect="AspectFit" />
-            </VerticalStackLayout>
+            <Label
+                x:Name="CounterBtn"
+                Text="Where" 
+                SemanticProperties.Hint="Open a folder"
+                HorizontalOptions="Fill" />
+
+            <Button x:Name="Favourites" Text="Favourites" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Desktop" Text="Desktop" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Documents" Text="Documents" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Downloads" Text="Downloads" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Picture" Text="Pictures" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Video" Text="Video" Clicked="OnOpenFolderClicked" />
+            <Button x:Name="Music" Text="Music" Clicked="OnOpenFolderClicked" />
+
+            <Image x:Name="PreviewImage" HeightRequest="300" Aspect="AspectFit" />
+        </VerticalStackLayout>
+
+        <!-- Draggable splitter -->
+        <BoxView
+            x:Name="Splitter"
+            Grid.Column="1"
+            WidthRequest="8"
+            BackgroundColor="Gray"
+            HorizontalOptions="Center">
+            <BoxView.GestureRecognizers>
+                <PanGestureRecognizer PanUpdated="OnSplitterPanUpdated" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <!-- Right Side (Scrollable) -->
+        <ScrollView Grid.Column="2">
             <FlexLayout
                 x:Name="MyStackLayout"
                 Wrap="Wrap"
@@ -41,7 +65,6 @@
                 AlignItems="Start"
                 Padding="10"
                 Direction="Row" />
-        </HorizontalStackLayout>
-    </ScrollView>
-
+        </ScrollView>
+    </Grid>
 </ContentPage>
