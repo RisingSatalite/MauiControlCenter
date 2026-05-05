@@ -67,7 +67,7 @@
             SelectionMode="None">
 
             <CollectionView.ItemsLayout>
-                <GridItemsLayout Orientation="Vertical" Span="4" VerticalItemSpacing="12" HorizontalItemSpacing="12" />
+                <GridItemsLayout x:Name="FilesGridLayout" Orientation="Vertical" Span="1" VerticalItemSpacing="12" HorizontalItemSpacing="12" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>

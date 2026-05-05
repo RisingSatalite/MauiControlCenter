@@ -145,14 +145,37 @@ public partial class MainPage : ContentPage
 			cv.SizeChanged += (s, e) =>
 			{
 				if (cv.Width <= 0) return;
-				const int itemWidth = 112; // approx item width + spacing
-				int span = Math.Max(1, (int)(cv.Width / itemWidth));
-				var layout = new GridItemsLayout(span, ItemsLayoutOrientation.Vertical)
+
+				// Match these values to the DataTemplate
+				const double itemContentWidth = 100; // DataTemplate VerticalStackLayout WidthRequest
+				const double borderPaddingBothSides = 8; // Border Padding = 4 (left+right)
+				const double borderMarginBothSides = 12; // Border Margin = 6 (left+right)
+				const double horizontalSpacing = 12; // GridItemsLayout spacing
+
+				double itemFullWidth = itemContentWidth + borderPaddingBothSides + borderMarginBothSides;
+
+				int span = Math.Max(1, (int)Math.Floor((cv.Width + horizontalSpacing) / (itemFullWidth + horizontalSpacing)));
+
+				// Update existing layout when possible to avoid churn
+				if (cv.ItemsLayout is GridItemsLayout grid)
 				{
-					VerticalItemSpacing = 12,
-					HorizontalItemSpacing = 12
-				};
-				cv.ItemsLayout = layout;
+					if (grid.Span != span ||
+						grid.HorizontalItemSpacing != horizontalSpacing ||
+						grid.VerticalItemSpacing != 12)
+					{
+						grid.Span = span;
+						grid.HorizontalItemSpacing = horizontalSpacing;
+						grid.VerticalItemSpacing = 12;
+					}
+				}
+				else
+				{
+					cv.ItemsLayout = new GridItemsLayout(span, ItemsLayoutOrientation.Vertical)
+					{
+						VerticalItemSpacing = 12,
+						HorizontalItemSpacing = horizontalSpacing
+					};
+				}
 			};
 		}
 
