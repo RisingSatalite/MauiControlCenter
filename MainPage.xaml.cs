@@ -2,6 +2,10 @@
 using System.IO;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 using Microsoft.Maui.Controls;
@@ -30,13 +34,17 @@ public partial class MainPage : ContentPage
 	// Cancellation for incremental loading
 	CancellationTokenSource? _loadCts;
 	const int DefaultBatchSize = 64;
-	string[] files;
-	string[] folders;
+	string[]? files;
+	string[]? folders;
 
 	// Fields for splitter resizing
 	double _initialLeftWidth;
 	const double SplitterWidth = 8;
 	const double MinPaneWidth = 120;
+
+	// Collection backing the CollectionView
+	private readonly ObservableCollection<FileItem> _items = new ObservableCollection<FileItem>();
+	public ObservableCollection<FileItem> Items => _items;
 
 	//Incase of edge cases
 	private static string GetDownloadsPath()
@@ -130,7 +138,41 @@ public partial class MainPage : ContentPage
 
 		BindingContext = this;
 
+		// Wire up CollectionView sizing so the grid span adapts to width
+		var cv = this.FindByName<CollectionView>("FilesCollectionView");
+		if (cv != null)
+		{
+			cv.SizeChanged += (s, e) =>
+			{
+				if (cv.Width <= 0) return;
+				const int itemWidth = 112; // approx item width + spacing
+				int span = Math.Max(1, (int)(cv.Width / itemWidth));
+				var layout = new GridItemsLayout(span, ItemsLayoutOrientation.Vertical)
+				{
+					VerticalItemSpacing = 12,
+					HorizontalItemSpacing = 12
+				};
+				cv.ItemsLayout = layout;
+			};
+		}
+
 		// Do not enumerate folders synchronously on startup; load when requested.
+	}
+
+	// Called from XAML TapGestureRecognizer inside the CollectionView item template
+	private async void OnItemTapped(object sender, EventArgs e)
+	{
+		var bo = sender as BindableObject;
+		var item = bo?.BindingContext as FileItem;
+		if (item == null) return;
+		if (item.IsFolder)
+		{
+			OnOpenFolderClicked(item.Path);
+		}
+		else
+		{
+			await OnOpenFileClicked(item.Path);
+		}
 	}
 
 	void OnSplitterPanUpdated(object sender, PanUpdatedEventArgs e)
@@ -163,12 +205,13 @@ public partial class MainPage : ContentPage
 				break;
 		}
 	}
+
 	public void UpdateFileFolders()
 	{
+		// keep legacy helper available
 		files = Directory.GetFiles(location);
 		folders = Directory.GetDirectories(location);
 	}
-
 	//The default button, keep for now
 	private async void OnCounterClicked(object? sender, EventArgs? e)
 	{
@@ -194,44 +237,14 @@ public partial class MainPage : ContentPage
 	// Incrementally enumerate and add folder/file UI in batches to keep UI responsive
 	private async Task LoadFolderIncrementalAsync(string path, CancellationToken ct, int batchSize = DefaultBatchSize)
 	{
-		// Clear existing items on UI thread quickly
-		MainThread.BeginInvokeOnMainThread(() => MyStackLayout.Children.Clear());
-
-		// Helper to create folder UI
-		View CreateFolderElement(string folderPath)
-		{
-			string name = Path.GetFileName(folderPath);
-			var iconLabel = new Label { Text = "📁", FontSize = 48, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
-			var nameLabel = new Label { Text = name, FontSize = 12, HorizontalTextAlignment = TextAlignment.Center, LineBreakMode = LineBreakMode.TailTruncation };
-			var stack = new VerticalStackLayout { WidthRequest = 100, Padding = new Thickness(6), Children = { iconLabel, nameLabel } };
-			var border = new Border { Padding = new Thickness(4), Margin = new Thickness(6), BackgroundColor = Colors.Transparent, Content = stack };
-			var tap = new TapGestureRecognizer();
-			tap.Tapped += (s, e) => OnOpenFolderClicked(folderPath);
-			border.GestureRecognizers.Add(tap);
-			return border;
-		}
-
-		// Helper to create file UI and kick off thumbnail loading
-		View CreateFileElement(string filePath)
-		{
-			string name = Path.GetFileName(filePath);
-			string ext = Path.GetExtension(filePath).ToLowerInvariant();
-			View placeholder = new Label { Text = ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".gif" ? "🖼️" : "📄", FontSize = 36, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
-			var nameLabel = new Label { Text = name, FontSize = 12, HorizontalTextAlignment = TextAlignment.Center, LineBreakMode = LineBreakMode.TailTruncation };
-			var stack = new VerticalStackLayout { WidthRequest = 100, Padding = new Thickness(6), Children = { placeholder, nameLabel } };
-			var border = new Border { Padding = new Thickness(4), Margin = new Thickness(6), BackgroundColor = Colors.Transparent, Content = stack };
-			var tap = new TapGestureRecognizer();
-			tap.Tapped += async (s, e) => await OnOpenFileClicked(filePath);
-			border.GestureRecognizers.Add(tap);
-			_ = LoadAndApplyThumbnailAsync(filePath, stack);
-			return border;
-		}
+		// Clear existing items quickly
+		MainThread.BeginInvokeOnMainThread(() => _items.Clear());
 
 		// Enumerate directories first, then files. Use Enumerate* to avoid materializing large arrays.
 		var dirEnum = Directory.EnumerateDirectories(path).GetEnumerator();
 		var fileEnum = Directory.EnumerateFiles(path).GetEnumerator();
 
-		List<View> batch = new List<View>(batchSize);
+		List<FileItem> batch = new List<FileItem>(batchSize);
 		try
 		{
 			// Directories
@@ -241,14 +254,14 @@ public partial class MainPage : ContentPage
 				batch.Clear();
 				for (int i = 0; i < batchSize && dirEnum.MoveNext(); i++)
 				{
-					batch.Add(CreateFolderElement(dirEnum.Current));
+					batch.Add(new FileItem { Path = dirEnum.Current, Name = Path.GetFileName(dirEnum.Current), IsFolder = true });
 				}
 
 				if (batch.Count == 0) break;
 
 				MainThread.BeginInvokeOnMainThread(() =>
 				{
-					foreach (var v in batch) MyStackLayout.Children.Add(v);
+					foreach (var it in batch) _items.Add(it);
 				});
 
 				// yield to UI
@@ -262,14 +275,17 @@ public partial class MainPage : ContentPage
 				batch.Clear();
 				for (int i = 0; i < batchSize && fileEnum.MoveNext(); i++)
 				{
-					batch.Add(CreateFileElement(fileEnum.Current));
+					var f = fileEnum.Current;
+					var itm = new FileItem { Path = f, Name = Path.GetFileName(f), IsFolder = false };
+					batch.Add(itm);
+					_ = LoadAndApplyThumbnailAsync(itm);
 				}
 
 				if (batch.Count == 0) break;
 
 				MainThread.BeginInvokeOnMainThread(() =>
 				{
-					foreach (var v in batch) MyStackLayout.Children.Add(v);
+					foreach (var it in batch) _items.Add(it);
 				});
 
 				// yield to UI
@@ -312,39 +328,62 @@ public partial class MainPage : ContentPage
 #endif
 		return null;
 	}
-
-	private async Task LoadAndApplyThumbnailAsync(string filePath, VerticalStackLayout stack)
+	private async Task LoadAndApplyThumbnailAsync(FileItem item)
 	{
 		try
 		{
-			var thumb = await GetThumbnailAsync(filePath).ConfigureAwait(false);
+			var thumb = await GetThumbnailAsync(item.Path).ConfigureAwait(false);
 			if (thumb != null)
 			{
-				Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
-				{
-					var img = new Image
-					{
-						Source = thumb,
-						WidthRequest = 64,
-						HeightRequest = 64,
-						Aspect = Aspect.AspectFill,
-						HorizontalOptions = LayoutOptions.Center
-					};
-					// Replace first child (placeholder) with the loaded image
-					if (stack.Children.Count > 0)
-					{
-						stack.Children[0] = img;
-					}
-				});
-			}
-			else
-			{
-				// no thumbnail: do nothing, placeholder remains
+				MainThread.BeginInvokeOnMainThread(() => item.Thumbnail = thumb);
 			}
 		}
 		catch
 		{
-			// ignore errors and keep placeholder
+			// ignore errors
 		}
 	}
+
+}
+
+// Simple data model for CollectionView items
+public class FileItem : INotifyPropertyChanged
+{
+	public string Path { get; set; } = string.Empty;
+	public string Name { get; set; } = string.Empty;
+	public bool IsFolder { get; set; }
+
+	ImageSource? _thumbnail;
+	public ImageSource? Thumbnail
+	{
+		get => _thumbnail;
+		set => SetProperty(ref _thumbnail, value);
+	}
+
+	public string Icon
+	{
+		get
+		{
+			if (IsFolder) return "📁";
+			var ext = System.IO.Path.GetExtension(Path).ToLowerInvariant();
+			if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".gif") return "🖼️";
+			return "📄";
+		}
+	}
+
+	public event PropertyChangedEventHandler? PropertyChanged;
+
+	protected bool SetProperty<T>(ref T backingStore, T value, [CallerMemberName] string? propertyName = null)
+	{
+		if (EqualityComparer<T>.Default.Equals(backingStore, value)) return false;
+		backingStore = value;
+		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		return true;
+	}
+
+	protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+	{
+		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+	}
+
 }
