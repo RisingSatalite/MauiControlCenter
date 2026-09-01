@@ -36,6 +36,12 @@
                 SemanticProperties.Hint="Open a folder"
                 HorizontalOptions="Fill" />
 
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="← Back" Clicked="OnBackClicked" />
+                <Button Text="↑ Up" Clicked="OnUpClicked" />
+                <Button Text="↻ Refresh" Clicked="OnRefreshClicked" />
+            </HorizontalStackLayout>
+
             <Button x:Name="Favourites" Text="Favourites" Clicked="OnOpenFolderClicked" />
             <Button x:Name="Desktop" Text="Desktop" Clicked="OnOpenFolderClicked" />
             <Button x:Name="Documents" Text="Documents" Clicked="OnOpenFolderClicked" />

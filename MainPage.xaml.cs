@@ -37,6 +37,10 @@ public partial class MainPage : ContentPage
 	string[] files = Array.Empty<string>();
 	string[] folders = Array.Empty<string>();
 
+	// Navigation history for back/up actions
+	private readonly Stack<string> _backStack = new Stack<string>();
+	private readonly Stack<string> _forwardStack = new Stack<string>();
+
 	// Fields for splitter resizing
 	double _initialLeftWidth;
 	const double SplitterWidth = 8;
@@ -93,22 +97,64 @@ public partial class MainPage : ContentPage
 		//}
 	}
 
-	private void OnOpenFolderClicked(string folderPath)
+	private void NavigateToFolder(string folderPath, bool addToHistory = true)
 	{
 		if (string.IsNullOrWhiteSpace(folderPath))
 		{
-			DisplayAlert("Error", "No folder path provided.", "OK");
+			_ = DisplayAlert("Error", "No folder path provided.", "OK");
 			return;
 		}
 
-		if (!Directory.Exists(folderPath))
+		var normalizedPath = Path.GetFullPath(folderPath);
+		if (!Directory.Exists(normalizedPath))
 		{
-			DisplayAlert("Error", "Folder not found.", "OK");
+			_ = DisplayAlert("Error", "Folder not found.", "OK");
 			return;
 		}
 
-		// ✅ Save the actual folder path, not the extension
-		location = folderPath;
+		if (addToHistory && !string.Equals(location, normalizedPath, StringComparison.OrdinalIgnoreCase))
+		{
+			_backStack.Push(location);
+			_forwardStack.Clear();
+		}
+
+		location = normalizedPath;
+		OnCounterClicked(null, null);
+	}
+
+	private void OnOpenFolderClicked(string folderPath)
+	{
+		NavigateToFolder(folderPath);
+	}
+
+	private async void OnBackClicked(object sender, EventArgs e)
+	{
+		if (_backStack.Count == 0)
+		{
+			await DisplayAlert("Navigation", "No previous folder.", "OK");
+			return;
+		}
+
+		var previousFolder = _backStack.Pop();
+		_forwardStack.Push(location);
+		location = previousFolder;
+		OnCounterClicked(null, null);
+	}
+
+	private void OnUpClicked(object sender, EventArgs e)
+	{
+		var parent = Directory.GetParent(location);
+		if (parent == null)
+		{
+			_ = DisplayAlert("Navigation", "You are already at the root of this folder.", "OK");
+			return;
+		}
+
+		NavigateToFolder(parent.FullName);
+	}
+
+	private void OnRefreshClicked(object sender, EventArgs e)
+	{
 		OnCounterClicked(null, null);
 	}
 
@@ -117,10 +163,7 @@ public partial class MainPage : ContentPage
 	{
 		if (sender is Button btn && btn.CommandParameter is string folderPath)
 		{
-			location = folderPath;
-			OnCounterClicked(null, null);
-			// DisplayAlert("Folder Path", folderPath, "OK");
-			// open folder or do whatever with folderPath
+			NavigateToFolder(folderPath);
 		}
 	}
 
