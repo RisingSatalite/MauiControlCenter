@@ -111,6 +111,48 @@ public partial class MainPage : ContentPage
 		await Explorer.RefreshAsync();
 	}
 
+	private void OnItemBindingContextChanged(object sender, EventArgs e)
+	{
+		if (sender is not Element element)
+		{
+			return;
+		}
+
+		var item = element.BindingContext as FileItem;
+		if (item == null)
+		{
+			FlyoutBase.SetContextFlyout(element, null);
+			return;
+		}
+
+		var flyout = new MenuFlyout();
+		var openItem = new MenuFlyoutItem { Text = "Open" };
+		openItem.Clicked += async (_, _) =>
+		{
+			Explorer.SelectItem(item);
+			await Explorer.OpenItemAsync(item);
+		};
+
+		var renameItem = new MenuFlyoutItem { Text = "Rename" };
+		renameItem.Clicked += async (_, _) =>
+		{
+			Explorer.SelectItem(item);
+			await Explorer.RenameItemAsync(item);
+		};
+
+		var deleteItem = new MenuFlyoutItem { Text = "Delete" };
+		deleteItem.Clicked += async (_, _) =>
+		{
+			Explorer.SelectItem(item);
+			await Explorer.DeleteItemAsync(item);
+		};
+
+		flyout.Add(openItem);
+		flyout.Add(renameItem);
+		flyout.Add(deleteItem);
+		FlyoutBase.SetContextFlyout(element, flyout);
+	}
+
 	private async void OnItemTapped(object sender, EventArgs e)
 	{
 		var bo = sender as BindableObject;
@@ -120,6 +162,7 @@ public partial class MainPage : ContentPage
 			return;
 		}
 
+		Explorer.SelectItem(item);
 		await Explorer.OpenItemAsync(item);
 	}
 

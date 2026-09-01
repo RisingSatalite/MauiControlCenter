@@ -7,7 +7,7 @@ namespace MauiControlCenter
     public class NullToBoolConverter : IValueConverter
     {
         // Returns true when value is null by default. If ConverterParameter is "invert" returns !isNull.
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             bool isNull = value == null;
             bool invert = false;
@@ -19,7 +19,7 @@ namespace MauiControlCenter
             return invert ? !isNull : isNull;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }

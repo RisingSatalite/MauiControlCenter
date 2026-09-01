@@ -79,30 +79,14 @@
 
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="local:FileItem">
-                    <Border Padding="4" Margin="6" BackgroundColor="Transparent">
-                        <VerticalStackLayout WidthRequest="100" Padding="6">
-                            <Grid>
-                                <Image Source="{Binding Thumbnail}" WidthRequest="64" HeightRequest="64" Aspect="AspectFill" HorizontalOptions="Center" IsVisible="True">
-                                    <Image.Triggers>
-                                        <DataTrigger TargetType="Image" Binding="{Binding Thumbnail}" Value="{x:Null}">
-                                            <Setter Property="IsVisible" Value="False" />
-                                        </DataTrigger>
-                                    </Image.Triggers>
-                                </Image>
-                                <Label Text="{Binding Icon}" FontSize="36" HorizontalOptions="Center" VerticalOptions="Center" IsVisible="False">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding Thumbnail}" Value="{x:Null}">
-                                            <Setter Property="IsVisible" Value="True" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Grid>
-                            <Label Text="{Binding Name}" FontSize="12" HorizontalTextAlignment="Center" LineBreakMode="TailTruncation" />
-                        </VerticalStackLayout>
-                        <Border.GestureRecognizers>
+                    <VerticalStackLayout WidthRequest="100" Padding="6" BindingContextChanged="OnItemBindingContextChanged">
+                        <Image Source="{Binding Thumbnail}" WidthRequest="64" HeightRequest="64" Aspect="AspectFill" HorizontalOptions="Center" IsVisible="{Binding Thumbnail, TargetNullValue=False, FallbackValue=True}" />
+                        <Label Text="{Binding Icon}" FontSize="36" HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding Thumbnail, TargetNullValue=True, FallbackValue=False}" />
+                        <Label Text="{Binding Name}" FontSize="12" HorizontalTextAlignment="Center" LineBreakMode="TailTruncation" />
+                        <VerticalStackLayout.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnItemTapped" />
-                        </Border.GestureRecognizers>
-                    </Border>
+                        </VerticalStackLayout.GestureRecognizers>
+                    </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>

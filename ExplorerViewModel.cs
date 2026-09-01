@@ -19,11 +19,19 @@ public class ExplorerViewModel : INotifyPropertyChanged
 
     public string CurrentPath { get; private set; } = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
+    public FileItem? SelectedItem { get; private set; }
+
     public bool CanGoBack => _backStack.Count > 0;
 
     public bool CanGoUp => Directory.Exists(Path.GetDirectoryName(CurrentPath));
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public void SelectItem(FileItem? item)
+    {
+        SelectedItem = item;
+        OnPropertyChanged(nameof(SelectedItem));
+    }
 
     public async Task NavigateToFolderAsync(string folderPath, bool addToHistory = true)
     {
@@ -99,6 +107,8 @@ public class ExplorerViewModel : INotifyPropertyChanged
             return;
         }
 
+        SelectItem(item);
+
         if (item.IsFolder)
         {
             await NavigateToFolderAsync(item.Path);
@@ -123,6 +133,103 @@ public class ExplorerViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             await ShowAlert("Error", $"Unable to open file: {ex.Message}", "OK");
+        }
+    }
+
+    public async Task RenameItemAsync(FileItem? item)
+    {
+        if (item == null || string.IsNullOrWhiteSpace(item.Path))
+        {
+            return;
+        }
+
+        SelectItem(item);
+
+        var currentName = Path.GetFileName(item.Path) ?? item.Name;
+        var parentDirectory = Path.GetDirectoryName(item.Path);
+        if (string.IsNullOrWhiteSpace(parentDirectory))
+        {
+            return;
+        }
+
+        var page = GetActivePage();
+        var newName = page == null ? string.Empty : await page.DisplayPromptAsync("Rename item", "Enter the new name:", "OK", "Cancel", currentName);
+        if (string.IsNullOrWhiteSpace(newName))
+        {
+            return;
+        }
+
+        newName = Path.GetFileName(newName);
+        var newPath = Path.Combine(parentDirectory, newName);
+        if (string.Equals(item.Path, newPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (File.Exists(newPath) || Directory.Exists(newPath))
+        {
+            await ShowAlert("Error", "An item with that name already exists.", "OK");
+            return;
+        }
+
+        try
+        {
+            if (item.IsFolder)
+            {
+                Directory.Move(item.Path, newPath);
+            }
+            else
+            {
+                File.Move(item.Path, newPath);
+            }
+
+            item.Path = newPath;
+            item.Name = newName;
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            await ShowAlert("Error", $"Unable to rename item: {ex.Message}", "OK");
+        }
+    }
+
+    public async Task DeleteItemAsync(FileItem? item)
+    {
+        if (item == null || string.IsNullOrWhiteSpace(item.Path))
+        {
+            return;
+        }
+
+        SelectItem(item);
+
+        var page = GetActivePage();
+        var confirm = page == null ? false : await page.DisplayAlert(
+            "Delete item",
+            $"Delete '{item.Name}'?",
+            "Delete",
+            "Cancel");
+
+        if (!confirm)
+        {
+            return;
+        }
+
+        try
+        {
+            if (item.IsFolder)
+            {
+                Directory.Delete(item.Path, recursive: true);
+            }
+            else
+            {
+                File.Delete(item.Path);
+            }
+
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            await ShowAlert("Error", $"Unable to delete item: {ex.Message}", "OK");
         }
     }
 
@@ -229,9 +336,14 @@ public class ExplorerViewModel : INotifyPropertyChanged
         return null;
     }
 
+    private static Page? GetActivePage()
+    {
+        return Application.Current?.Windows.FirstOrDefault()?.Page;
+    }
+
     private static async Task ShowAlert(string title, string message, string accept)
     {
-        var page = Application.Current?.MainPage;
+        var page = GetActivePage();
         if (page != null)
         {
             await page.DisplayAlert(title, message, accept);
