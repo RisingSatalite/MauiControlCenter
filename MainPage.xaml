@@ -32,7 +32,7 @@
 
             <Label
                 x:Name="CounterBtn"
-                Text="Where" 
+                Text="{Binding CurrentPath}"
                 SemanticProperties.Hint="Open a folder"
                 HorizontalOptions="Fill" />
 
