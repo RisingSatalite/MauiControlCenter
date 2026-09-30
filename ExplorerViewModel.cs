@@ -15,7 +15,31 @@ public class ExplorerViewModel : INotifyPropertyChanged
     private CancellationTokenSource? _loadCts;
 
     private readonly ObservableCollection<FileItem> _items = new();
+    private List<FileItem> _allItems = new();
+    private string _searchText = string.Empty;
     public ObservableCollection<FileItem> Items => _items;
+
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (_searchText == value)
+            {
+                return;
+            }
+
+            _searchText = value;
+            OnPropertyChanged();
+            ApplyFilter();
+        }
+    }
+
+    public string ItemCountText => string.IsNullOrWhiteSpace(SearchText)
+        ? $"{_allItems.Count} items"
+        : $"{_items.Count} of {_allItems.Count} items";
+
+    public bool HasNoItems => _items.Count == 0;
 
     public string CurrentPath { get; private set; } = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
@@ -273,17 +297,11 @@ public class ExplorerViewModel : INotifyPropertyChanged
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                _items.Clear();
-                foreach (var item in items)
-                {
-                    _items.Add(item);
-                }
+                _allItems = items;
+                ApplyFilter();
             });
 
-            foreach (var item in items.Where(i => !i.IsFolder))
-            {
-                _ = LoadThumbnailAsync(item);
-            }
+            _ = LoadThumbnailsAsync(items.Where(item => !item.IsFolder).ToList(), token);
         }
         catch (OperationCanceledException)
         {
@@ -293,6 +311,23 @@ public class ExplorerViewModel : INotifyPropertyChanged
         {
             await ShowAlert("Error", ex.Message, "OK");
         }
+    }
+
+    private void ApplyFilter()
+    {
+        var query = SearchText.Trim();
+        var matchingItems = string.IsNullOrEmpty(query)
+            ? _allItems
+            : _allItems.Where(item => item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        _items.Clear();
+        foreach (var item in matchingItems)
+        {
+            _items.Add(item);
+        }
+
+        OnPropertyChanged(nameof(ItemCountText));
+        OnPropertyChanged(nameof(HasNoItems));
     }
 
     private async Task LoadThumbnailAsync(FileItem item)
@@ -311,6 +346,42 @@ public class ExplorerViewModel : INotifyPropertyChanged
         }
     }
 
+    private async Task LoadThumbnailsAsync(IReadOnlyCollection<FileItem> items, CancellationToken token)
+    {
+        try
+        {
+            await Parallel.ForEachAsync(items, new ParallelOptions
+            {
+                MaxDegreeOfParallelism = 4,
+                CancellationToken = token
+            }, async (item, cancellationToken) =>
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                var thumbnail = await GetThumbnailAsync(item.Path).ConfigureAwait(false);
+                if (thumbnail == null || cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        item.Thumbnail = thumbnail;
+                    }
+                });
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore thumbnail work for folders that are no longer visible.
+        }
+    }
+
     private async Task<ImageSource?> GetThumbnailAsync(string path)
     {
 #if WINDOWS
@@ -318,7 +389,7 @@ public class ExplorerViewModel : INotifyPropertyChanged
         {
             var storageFile = await Windows.Storage.StorageFile.GetFileFromPathAsync(path);
             const uint requestedSize = 64;
-            var thumb = await storageFile.GetThumbnailAsync(Windows.Storage.FileProperties.ThumbnailMode.SingleItem, requestedSize);
+            var thumb = await storageFile.GetThumbnailAsync(Windows.Storage.FileProperties.ThumbnailMode.ListView, requestedSize);
             if (thumb != null && thumb.Size > 0)
             {
                 using var stream = thumb.AsStreamForRead();
@@ -366,8 +437,18 @@ public class FileItem : INotifyPropertyChanged
     public ImageSource? Thumbnail
     {
         get => _thumbnail;
-        set => SetProperty(ref _thumbnail, value);
+        set
+        {
+            if (SetProperty(ref _thumbnail, value))
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasThumbnail)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasNoThumbnail)));
+            }
+        }
     }
+
+    public bool HasThumbnail => Thumbnail != null;
+    public bool HasNoThumbnail => Thumbnail == null;
 
     //Old
     public string Icon
