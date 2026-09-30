@@ -64,7 +64,7 @@
                 <Border Stroke="#DCE4DF" StrokeThickness="1" StrokeShape="RoundRectangle 6" Padding="12,8" VerticalOptions="Center">
                     <Label Text="{Binding CurrentPath}" FontSize="13" TextColor="#53645A" LineBreakMode="TailTruncation" VerticalOptions="Center" />
                 </Border>
-                <SearchBar Grid.Column="1" Placeholder="Search this folder" Text="{Binding SearchText, Mode=TwoWay}" BackgroundColor="#F2F5F3" CancelButtonColor="#4F8064" HeightRequest="44" />
+                <SearchBar Grid.Column="1" Placeholder="Search this folder" Text="{Binding SearchText, Mode=TwoWay}" BackgroundColor="#F2F5F3" TextColor="Black" CancelButtonColor="#4F8064" HeightRequest="44" />
             </Grid>
 
             <Grid Grid.Row="2">
